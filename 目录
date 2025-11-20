@@ -1,0 +1,36 @@
+train.py
+├── config.py → 定义 ModelConfig（Ro、omega_0、scaler 等）
+├── data_loader.py → load_csv_data() 加载数据 + scaler
+├── physics_model.py → EnhancedPhysicsInformedThermocline 模型类
+│   ├── base_flow_predictor
+│   ├── dynamic_z0_net
+│   ├── theta_net / eta_net
+│   ├── compute_approximate_velocity()
+│   └── get_all_parameters()
+├── compute_approximate_velocity.py
+│   └── compute_velocity(model, x, y, z, t)
+│       └── 调用 model.compute_approximate_velocity()
+├── compute_physics_residual.py
+│   └── compute_residuals(model, x, y, z, t)
+│       └── 使用 model.compute_approximate_velocity() + autograd
+├── physics_residual.py
+│   └── geometric_constraint(g1, g2, Z0, x, y)
+├── losses.py
+│   ├── direction_loss()
+│   ├── value_loss()
+│   └── activation_loss(theta, eta)
+├── utils.py
+│   ├── get_device()
+│   ├── prepare_inputs()
+│   ├── rescale_to_physical_units()
+│   └── LossManager（多项损失加权管理）
+├── save_utils.py
+│   ├── save_model()
+│   ├── save_predictions()
+│   ├── save_statistics()
+│   ├── save_visual_report()
+│   ├── save_loss_history()
+│   ├── save_tensor_statistics()
+│   ├── save_model_parameters()
+│   ├── validate_residual_consistency()
+│   └── save_direction_consistency()

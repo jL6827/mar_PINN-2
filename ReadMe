@@ -1,0 +1,30 @@
+# EnhancedPINN: Thermocline-Aware Physics-Informed Neural Network
+
+This project implements a multiscale PINN model for predicting oceanic and atmospheric velocity fields influenced by thermocline boundary structures.
+
+## Features
+
+- SIREN-based neural architecture
+- Dynamic thermocline depth modeling
+- Depth-aware correction networks
+- Physics residual enforcement (momentum, continuity)
+- Directional loss and energy constraints
+
+## File Overview
+
+| File | Description |
+|------|-------------|
+| `siren.py` | SIREN layer with sinusoidal activation |
+| `losses.py` | Directional loss function |
+| `z0_net.py` | Dynamic thermocline depth predictor |
+| `correction_net.py` | Depth-aware correction networks |
+| `base_flow.py` | Base velocity field predictor |
+| `utils.py` | Device selection and helpers |
+| `physics_model.py` | Main PINN model |
+| `train.py` | Training loop with synthetic data |
+
+## Getting Started
+
+```bash
+pip install -r requirements.txt
+python train.py
