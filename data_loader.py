@@ -1,14 +1,8 @@
-# 修改说明：
-# - 支持 CSV 中使用 'date' 作为时间列（如果存在则会创建 'time' 列并转换为秒数）
-# - 仍兼容已有的 'time' 列
-# - 忽略 t_numeric（不使用）
-# - 保持原有函数签名：load_csv_data, split_dataset_random, load_csv_data_from_df
-# - 若既无 'time' 也无 'date' 会抛出更友好的错误提示
-
 from scaler_manager import ScalerManager
 import pandas as pd
 import torch
 import time
+
 
 def _ensure_time_column(df):
     """
@@ -31,6 +25,7 @@ def _ensure_time_column(df):
                        + ", ".join(df.columns.tolist()))
     return df
 
+
 def load_csv_data(file_path, device='cpu'):
     df = pd.read_csv(file_path)
 
@@ -46,7 +41,6 @@ def load_csv_data(file_path, device='cpu'):
     inputs = torch.tensor(features_norm, dtype=torch.float32).to(device)
 
     # 提取目标速度（及其它物理量如果需要）
-    # 原仓库里默认目标是 uo, vo
     targets = df[['uo', 'vo']].values
     targets = torch.tensor(targets, dtype=torch.float32).to(device)
 
@@ -60,31 +54,10 @@ def load_csv_data(file_path, device='cpu'):
 
     return t_norm, x_norm, y_norm, z_norm, u_true, v_true, scaler_mgr, df
 
-""""#def split_dataset_by_time(csv_path, train_ratio=0.8):
-    df = pd.read_csv(csv_path)
 
-    # 时间转换为秒数（与 load_csv_data 保持一致）
-    df['time'] = pd.to_datetime(df['time'])
-    df['time'] = (df['time'] - df['time'].min()).dt.total_seconds()
-
-    # 按时间排序
-    df_sorted = df.sort_values(by='time').reset_index(drop=True)
-
-    # 按比例划分
-    split_index = int(len(df_sorted) * train_ratio)
-    train_df = df_sorted.iloc[:split_index].copy()
-    test_df = df_sorted.iloc[split_index:].copy()
-
-    print(f"✅ 数据划分完成：训练集 {len(train_df)} 条，测试集 {len(test_df)} 条")
-    print(f"📊 时间范围：训练集 time ∈ [{train_df['time'].min()}, {train_df['time'].max()}]")
-    print(f"📊 时间范围：测试集 time ∈ [{test_df['time'].min()}, {test_df['time'].max()}]")
-
-    return train_df, test_df
-"""
 def split_dataset_random(csv_path, train_ratio=0.8, seed=None):
     if seed is None:
-        seed = int(time.time()*1000%2**32)
-
+        seed = int(time.time() * 1000 % 2 ** 32)
 
     df = pd.read_csv(csv_path)
 
@@ -103,17 +76,30 @@ def split_dataset_random(csv_path, train_ratio=0.8, seed=None):
     return train_df, test_df
 
 
-def load_csv_data_from_df(df, device='cpu'):
+def load_csv_data_from_df(df, device='cpu', scaler_mgr=None, fit_scaler=True):
+    """
+    输入：
+      df: pandas.DataFrame（已经读取的训练或测试 DataFrame）
+      device: torch device 字符串或对象
+      scaler_mgr: 如果为 None 且 fit_scaler=True，会新建并 fit；如果提供且 fit_scaler=False，会复用该 scaler_mgr 对 df 做 transform
+      fit_scaler: 布尔，训练时为 True（fit scaler），测试/验证时为 False（复用 scaler_mgr）
+    返回：
+      t_norm, x_norm, y_norm, z_norm, u_true, v_true, scaler_mgr, df
+    """
     from scaler_manager import ScalerManager
     import torch
 
     # 确保 time 列存在并为秒数
     df = _ensure_time_column(df)
 
-    scaler_mgr = ScalerManager()
-    scaler_mgr.fit(df)
+    if fit_scaler:
+        scaler_mgr = ScalerManager()
+        scaler_mgr.fit(df)
+    else:
+        if scaler_mgr is None:
+            raise ValueError("scaler_mgr must be provided when fit_scaler=False (for test/validation data).")
 
-    # 归一化输入特征
+    # 归一化输入特征（使用 scaler_mgr）
     features_norm = scaler_mgr.transform_all(df)
     inputs = torch.tensor(features_norm, dtype=torch.float32).to(device)
 
