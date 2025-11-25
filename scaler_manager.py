@@ -1,5 +1,12 @@
+# 修改说明：
+# - 对 fit 中选列做更健壮的检查：如果 'time' 不存在但有 'date'，优先使用 'time'（data_loader 已创建）
+# - inverse_transform_depth: 增强兼容性（支持 numpy 或 tensor）
+# - 保持接口不变，兼容仓库其余代码
+
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
+import torch
 
 class ScalerManager:
     def __init__(self):
@@ -7,7 +14,12 @@ class ScalerManager:
         self.depth_scaler = MinMaxScaler()
 
     def fit(self, data_frame):
-        # 假设列顺序为 ['t', 'x', 'y', 'z']
+        # 尝试使用 'time','longitude','latitude','depth' 这四列来拟合 full_scaler
+        needed = ['time', 'longitude', 'latitude', 'depth']
+        missing = [c for c in needed if c not in data_frame.columns]
+        if missing:
+            raise KeyError(f"ScalerManager.fit expects columns {needed}, but missing {missing}. "
+                           "Make sure data_loader created 'time' from 'date' if necessary.")
         self.full_scaler.fit(data_frame[['time', 'longitude', 'latitude', 'depth']])
         self.depth_scaler.fit(data_frame[['depth']])
 
@@ -18,10 +30,15 @@ class ScalerManager:
         return self.full_scaler.inverse_transform(norm_array)
 
     def transform_depth(self, z_array):
-        return self.depth_scaler.transform(z_array.reshape(-1, 1))
+        z_np = np.array(z_array).reshape(-1, 1)
+        return self.depth_scaler.transform(z_np)
 
     def inverse_transform_depth(self, z_norm_array):
-        z_np = z_norm_array.detach().cpu().numpy().reshape(-1, 1)
+        # accept numpy array or torch tensor
+        if isinstance(z_norm_array, torch.Tensor):
+            z_np = z_norm_array.detach().cpu().numpy().reshape(-1, 1)
+        else:
+            z_np = np.array(z_norm_array).reshape(-1, 1)
         return self.depth_scaler.inverse_transform(z_np)
 
     def inverse_x(self, x_norm_tensor):

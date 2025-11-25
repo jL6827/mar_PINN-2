@@ -2,6 +2,7 @@
 #动态调整Ro的权重
 #这部分不好将它分成训练和预测的原因是：数据集分割是随机的，所以单独分开比较麻烦
 
+import argparse
 import os
 import torch
 from losses import direction_loss, value_loss, activation_loss
@@ -16,13 +17,28 @@ from physics_residual import geometric_constraint
 from utils import get_device, prepare_inputs, LossManager
 from save_utils import PredictionSaver
 
+import argparse
 
-def train_prediction_model():  # 修复：将 - 改为 _
-    input_path = '/Users/yidu/Desktop/MathSim/data-mean/processed_data_mean.csv'
-    output_dir = '/Users/yidu/Desktop/EnhancedPINN/Test0.18'
+def parse_args_for_train():
+    p = argparse.ArgumentParser()
+    # 默认使用项目内 data/ 和 outputs/ 子目录（相对路径）
+    p.add_argument("--input", "-i", default="data/processed_data_mean_train.csv",
+                   help="输入 CSV 文件路径（相对项目根目录），默认: data/processed_data_mean_train.csv")
+    p.add_argument("--output", "-o", default="outputs/run1",
+                   help="训练输出目录（相对项目根目录），默认: outputs/run1")
+    p.add_argument("--device", default=None, help="可选：cuda:0 或 cpu")
+    return p.parse_args()
+
+
+def train_prediction_model(input_path, output_dir, device=None):  # 修复：将 - 改为 _
     os.makedirs(output_dir, exist_ok=True)
 
-    device = get_device()
+    # 设备处理：如果用户通过 CLI 传入 device，则使用该设备字符串，否则使用项目自带的 get_device()
+    if device is not None:
+        device = torch.device(device)
+    else:
+        device = get_device()
+
     train_df, test_df = split_dataset_random(input_path)
     t, x, y, z, u_true, v_true, scaler_mgr, original_df = load_csv_data_from_df(train_df, device)
 
@@ -320,7 +336,6 @@ def train_prediction_model():  # 修复：将 - 改为 _
     u_true_np = u_true_test.detach().cpu().numpy().flatten()
     v_true_np = v_true_test.detach().cpu().numpy().flatten()
 
-
     indices = np.arange(len(u_pred_np))  # 使用全部测试点
 
     # Create three separate figures
@@ -415,8 +430,11 @@ def train_prediction_model():  # 修复：将 - 改为 _
     print(f"  Comparison data saved to: {comparison_csv_path}")
     print(f"  Comparison plots saved to: {comparison_plot_path}")
 
-
-
-
 if __name__ == "__main__":
-    train_prediction_model()
+    args = parse_args_for_train()
+    # 若希望确保 output 路径始终在仓库脚本目录下（即不受当前工作目录影响），可以把下面一行替换为：
+    # repo_root = os.path.dirname(os.path.abspath(__file__))
+    # output_dir = os.path.join(repo_root, args.output)
+    output_dir = args.output
+    input_path = args.input
+    train_prediction_model(input_path=input_path, output_dir=output_dir, device=args.device)

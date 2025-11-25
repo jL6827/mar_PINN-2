@@ -1,14 +1,41 @@
+# 修改说明：
+# - 支持 CSV 中使用 'date' 作为时间列（如果存在则会创建 'time' 列并转换为秒数）
+# - 仍兼容已有的 'time' 列
+# - 忽略 t_numeric（不使用）
+# - 保持原有函数签名：load_csv_data, split_dataset_random, load_csv_data_from_df
+# - 若既无 'time' 也无 'date' 会抛出更友好的错误提示
+
 from scaler_manager import ScalerManager
 import pandas as pd
 import torch
 import time
 
+def _ensure_time_column(df):
+    """
+    Ensure dataframe has a 'time' column as seconds since first timestamp.
+    Accepts original CSVs that have 'time' or 'date' column.
+    """
+    if 'time' in df.columns:
+        # try to parse to datetime if not numeric
+        try:
+            df['time'] = pd.to_datetime(df['time'])
+            df['time'] = (df['time'] - df['time'].min()).dt.total_seconds()
+        except Exception:
+            # if already numeric, leave as-is
+            pass
+    elif 'date' in df.columns:
+        df['time'] = pd.to_datetime(df['date'])
+        df['time'] = (df['time'] - df['time'].min()).dt.total_seconds()
+    else:
+        raise KeyError("Input CSV must contain either a 'time' or 'date' column. Found columns: "
+                       + ", ".join(df.columns.tolist()))
+    return df
+
 def load_csv_data(file_path, device='cpu'):
     df = pd.read_csv(file_path)
 
-    # 时间转换为秒数
-    df['time'] = pd.to_datetime(df['time'])
-    df['time'] = (df['time'] - df['time'].min()).dt.total_seconds()
+    # Ensure time column in seconds
+    df = _ensure_time_column(df)
 
     # 初始化 ScalerManager 并拟合
     scaler_mgr = ScalerManager()
@@ -18,7 +45,8 @@ def load_csv_data(file_path, device='cpu'):
     features_norm = scaler_mgr.transform_all(df)
     inputs = torch.tensor(features_norm, dtype=torch.float32).to(device)
 
-    # 提取目标速度
+    # 提取目标速度（及其它物理量如果需要）
+    # 原仓库里默认目标是 uo, vo
     targets = df[['uo', 'vo']].values
     targets = torch.tensor(targets, dtype=torch.float32).to(device)
 
@@ -60,9 +88,8 @@ def split_dataset_random(csv_path, train_ratio=0.8, seed=None):
 
     df = pd.read_csv(csv_path)
 
-    # 时间转换为秒数（保持一致）
-    df['time'] = pd.to_datetime(df['time'])
-    df['time'] = (df['time'] - df['time'].min()).dt.total_seconds()
+    # Ensure time is present as seconds (accept 'time' or 'date')
+    df = _ensure_time_column(df)
 
     # 随机打乱
     df_shuffled = df.sample(frac=1, random_state=seed).reset_index(drop=True)
@@ -80,7 +107,9 @@ def load_csv_data_from_df(df, device='cpu'):
     from scaler_manager import ScalerManager
     import torch
 
-    # 时间列已是秒数，无需转换
+    # 确保 time 列存在并为秒数
+    df = _ensure_time_column(df)
+
     scaler_mgr = ScalerManager()
     scaler_mgr.fit(df)
 
