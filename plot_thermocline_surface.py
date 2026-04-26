@@ -15,7 +15,8 @@
 #     --outdir outputs/exp_1 \
 #     --device cuda:0 \
 #     --sample 0 \
-#     --cmap jet
+#     --cmap jet \
+#     --levels 256
 #
 # 输出：
 #   <outdir>/fig/thermocline_Z0_contourf.png   (推荐：更平滑)
@@ -120,10 +121,12 @@ def plot_contourf(
     ylabel: str,
     cbar_label: str,
     cmap: str = "viridis",
+    levels=30,
 ):
     fig, ax = plt.subplots(figsize=(9, 7), dpi=150)
-    # levels 越多越平滑，但文件可能更大
-    cf = ax.contourf(X, Y, Z, levels=30, cmap=cmap)
+
+    # levels 越多，颜色过渡越连续（文件可能更大）
+    cf = ax.contourf(X, Y, Z, levels=levels, cmap=cmap)
     cbar = fig.colorbar(cf, ax=ax, shrink=0.9)
     cbar.set_label(cbar_label)
 
@@ -186,6 +189,12 @@ def main():
         "--cmap",
         default="viridis",
         help="matplotlib colormap 名称，例如 jet / turbo / viridis / plasma ...（想要 MATLAB jet 就用 jet）",
+    )
+    p.add_argument(
+        "--levels",
+        type=int,
+        default=30,
+        help="contourf 的颜色等级数；越大颜色过渡越平滑，例如 128 或 256。",
     )
     p.add_argument(
         "--plot-3d",
@@ -267,6 +276,7 @@ def main():
         ylabel=y_label,
         cbar_label=z_label,
         cmap=args.cmap,
+        levels=args.levels,
     )
     print(f"已保存平滑 2D 图: {save_contour}")
 
