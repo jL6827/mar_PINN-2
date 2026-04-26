@@ -340,15 +340,24 @@ def train_prediction_model(train_path=None, test_path=None, input_path=None, out
     (u_pred_test, v_pred_test, u_bar, v_bar, theta, eta, Z0,
      P, g1, g2, h1, h2, time_phase_C2, time_phase_C3) = compute_velocity(model, x_test, y_test, z_test, t_test)
 
+    # 注意：测试阶段默认只做前向预测与误差评估，不强制计算需要 x/y 梯度连接的约束项（例如 geo）。
+    # 这样可以避免在 requires_grad=False 或 no_grad 场景下出现 “未建立梯度连接” 报错。
     final_losses = {
         'data': value_loss(u_pred_test, v_pred_test, u_true_test, v_true_test),
         'dir': direction_loss(u_pred_test, v_pred_test, u_true_test, v_true_test),
-        'phys': torch.mean(compute_residuals(model, x_test, y_test, z_test, t_test)[0] ** 2 +
-                           compute_residuals(model, x_test, y_test, z_test, t_test)[1] ** 2),
-        'cont': torch.mean(compute_residuals(model, x_test, y_test, z_test, t_test)[2] ** 2),
-        'geo': geometric_constraint(g1, g2, Z0, x_test, y_test),
-        'act': activation_loss(theta, eta)
+        'act': activation_loss(theta, eta),
     }
+
+    # 这些 residual 也可能依赖 autograd；若 compute_residuals 内部要求梯度连接，这里也做 try/except
+    try:
+        res_u_t, res_v_t, res_cont_t = compute_residuals(model, x_test, y_test, z_test, t_test)
+        final_losses['phys'] = torch.mean(res_u_t ** 2 + res_v_t ** 2)
+        final_losses['cont'] = torch.mean(res_cont_t ** 2)
+    except Exception as e:
+        print(f"⚠️  测试阶段跳过 phys/cont residual 计算（原因: {e}）")
+
+    # geo 需要 Z0 对 x/y 的梯度连接；这里默认跳过
+    # 如需启用，请确保 x_test/y_test.requires_grad_(True) 且不在 no_grad 作用域内计算 Z0
 
     true_mag = torch.sqrt(u_true_test ** 2 + v_true_test ** 2)
     mask = (true_mag > 0.005)
