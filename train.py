@@ -26,10 +26,18 @@ def parse_args_for_train():
     p.add_argument("--output", "-o", default="outputs/run1",
                    help="训练输出目录（默认: outputs/run1）")
     p.add_argument("--device", default=None, help="可选：cuda:0 或 cpu")
+
+    # 新增：loss 曲线记录
+    p.add_argument("--log-loss", action="store_true",
+                   help="记录训练过程各分量损失到 CSV（用于画收敛曲线）。")
+    p.add_argument("--log-loss-every", type=int, default=1,
+                   help="每隔多少个 epoch 记录一次损失（默认: 1，每轮都记；设大一点可减小文件大小）。")
+
     return p.parse_args()
 
 
-def train_prediction_model(train_path=None, test_path=None, input_path=None, output_dir="outputs/run1", device=None):
+def train_prediction_model(train_path=None, test_path=None, input_path=None, output_dir="outputs/run1", device=None,
+                           log_loss: bool = False, log_loss_every: int = 1):
     os.makedirs(output_dir, exist_ok=True)
 
     if device is not None:
@@ -120,6 +128,10 @@ def train_prediction_model(train_path=None, test_path=None, input_path=None, out
         total_reg = ro_reg + b0_reg + b1_reg
         return total_reg, ro_reg, b0_reg, b1_reg
 
+    # loss 日志：用 list 收集，训练结束统一写 CSV
+    loss_rows = []
+    loss_csv_path = os.path.join(output_dir, "loss_history.csv")
+
     ro_history = []
     num_epochs = 8000
     final_train_loss = None
@@ -189,6 +201,36 @@ def train_prediction_model(train_path=None, test_path=None, input_path=None, out
 
         ro_history.append(model.Ro.item() if hasattr(model, 'Ro') else float('nan'))
         final_train_loss = total_loss.item()
+
+        # 记录损失（用于画收敛曲线）
+        if log_loss and (epoch % max(1, log_loss_every) == 0):
+            row = {
+                'epoch': int(epoch),
+                'total': float(total_loss.detach().cpu().item()),
+                'data': float(losses['data'].detach().cpu().item()),
+                'dir': float(losses['dir'].detach().cpu().item()),
+                'phys': float(losses['phys'].detach().cpu().item()),
+                'cont': float(losses['cont'].detach().cpu().item()),
+                'geo': float(losses['geo'].detach().cpu().item()),
+                'act': float(losses['act'].detach().cpu().item()),
+                'z0_reg': float(z0_reg.detach().cpu().item()),
+                'ro_reg': float(ro_reg.detach().cpu().item()),
+                'b0_reg': float(b0_reg.detach().cpu().item()),
+                'b1_reg': float(b1_reg.detach().cpu().item()),
+                'ro_change_penalty': float(ro_change_penalty.detach().cpu().item()),
+                'Ro': float(model.Ro.detach().cpu().item()) if hasattr(model, 'Ro') else float('nan'),
+                'lr_other': float(next(
+                    (pg['lr'] for pg in optimizer.param_groups
+                     if not (len(pg['params']) == 1 and pg['params'][0] is getattr(model, 'Ro', None))),
+                    base_lr
+                )),
+                'lr_Ro': float(next(
+                    (pg['lr'] for pg in optimizer.param_groups
+                     if len(pg['params']) == 1 and pg['params'][0] is getattr(model, 'Ro', None)),
+                    ro_base_lr
+                )),
+            }
+            loss_rows.append(row)
 
         try:
             current_lr_other = next(
@@ -261,6 +303,12 @@ def train_prediction_model(train_path=None, test_path=None, input_path=None, out
     # 保存训练结果
     pd.DataFrame({'Ro': ro_history}).to_csv(os.path.join(output_dir, 'ro_history.csv'), index=False)
     torch.save(model.state_dict(), os.path.join(output_dir, 'model_final.pt'))
+
+    # 写 loss_history.csv（如果启用）
+    if log_loss and loss_rows:
+        pd.DataFrame(loss_rows).to_csv(loss_csv_path, index=False)
+        print(f"✅ 已保存损失曲线数据到: {loss_csv_path}")
+
     print(f"✅ 模型训练完成，Ro 演化与参数已保存到: {output_dir}")
 
     summary = [
@@ -325,7 +373,10 @@ def train_prediction_model(train_path=None, test_path=None, input_path=None, out
 
     # 后续绘图与保存保持不变（略）
     ...
+
+
 if __name__ == "__main__":
     args = parse_args_for_train()
     train_prediction_model(train_path=args.train, test_path=args.test, input_path=args.input,
-                           output_dir=args.output, device=args.device)
+                           output_dir=args.output, device=args.device,
+                           log_loss=args.log_loss, log_loss_every=args.log_loss_every)
