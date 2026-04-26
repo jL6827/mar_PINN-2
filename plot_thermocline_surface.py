@@ -14,7 +14,8 @@
 #     --test-csv data/processed_data_mean_test.csv \
 #     --outdir outputs/exp_1 \
 #     --device cuda:0 \
-#     --sample 0
+#     --sample 0 \
+#     --cmap jet
 #
 # 输出：
 #   <outdir>/fig/thermocline_Z0_contourf.png   (推荐：更平滑)
@@ -109,10 +110,20 @@ def interpolate_to_grid(x, y, z, nx=200, ny=200, method="linear"):
     return X, Y, Zg
 
 
-def plot_contourf(X, Y, Z, save_path: str, title: str, xlabel: str, ylabel: str, cbar_label: str):
+def plot_contourf(
+    X,
+    Y,
+    Z,
+    save_path: str,
+    title: str,
+    xlabel: str,
+    ylabel: str,
+    cbar_label: str,
+    cmap: str = "viridis",
+):
     fig, ax = plt.subplots(figsize=(9, 7), dpi=150)
     # levels 越多越平滑，但文件可能更大
-    cf = ax.contourf(X, Y, Z, levels=30, cmap="viridis")
+    cf = ax.contourf(X, Y, Z, levels=30, cmap=cmap)
     cbar = fig.colorbar(cf, ax=ax, shrink=0.9)
     cbar.set_label(cbar_label)
 
@@ -127,7 +138,7 @@ def plot_contourf(X, Y, Z, save_path: str, title: str, xlabel: str, ylabel: str,
     plt.close(fig)
 
 
-def plot_surface(X, Y, Z, save_path: str, title: str, xlabel: str, ylabel: str, zlabel: str):
+def plot_surface(X, Y, Z, save_path: str, title: str, xlabel: str, ylabel: str, zlabel: str, cmap: str = "viridis"):
     from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
     fig = plt.figure(figsize=(10, 7), dpi=150)
@@ -135,7 +146,7 @@ def plot_surface(X, Y, Z, save_path: str, title: str, xlabel: str, ylabel: str, 
 
     # Z 中的 nan 会导致 surface 报错，做个 mask
     Zm = np.ma.masked_invalid(Z)
-    surf = ax.plot_surface(X, Y, Zm, cmap="viridis", linewidth=0, antialiased=True, alpha=0.95)
+    surf = ax.plot_surface(X, Y, Zm, cmap=cmap, linewidth=0, antialiased=True, alpha=0.95)
     fig.colorbar(surf, ax=ax, shrink=0.6, pad=0.08, label=zlabel)
 
     ax.set_title(title)
@@ -170,6 +181,11 @@ def main():
         choices=["linear", "cubic", "nearest"],
         default="linear",
         help="散点到网格插值方法（有 SciPy 时更准确）。",
+    )
+    p.add_argument(
+        "--cmap",
+        default="viridis",
+        help="matplotlib colormap 名称，例如 jet / turbo / viridis / plasma ...（想要 MATLAB jet 就用 jet）",
     )
     p.add_argument(
         "--plot-3d",
@@ -250,6 +266,7 @@ def main():
         xlabel=x_label,
         ylabel=y_label,
         cbar_label=z_label,
+        cmap=args.cmap,
     )
     print(f"已保存平滑 2D 图: {save_contour}")
 
@@ -264,6 +281,7 @@ def main():
             xlabel=x_label,
             ylabel=y_label,
             zlabel=z_label,
+            cmap=args.cmap,
         )
         print(f"已保存 3D surface 图: {save_surface}")
 
