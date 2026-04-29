@@ -1,0 +1,12 @@
+Velocity prediction metrics
+Source CSV: outputs/exp_3/full_prediction.csv
+
+Zonal Velocity (u)
+  MAE : 0.01575725
+  RMSE: 0.02211212
+  R2  : 0.29938025
+
+Meridional Velocity (v)
+  MAE : 0.01540269
+  RMSE: 0.02347850
+  R2  : -0.09442497

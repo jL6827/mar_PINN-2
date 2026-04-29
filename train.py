@@ -133,7 +133,7 @@ def train_prediction_model(train_path=None, test_path=None, input_path=None, out
     loss_csv_path = os.path.join(output_dir, "loss_history.csv")
 
     ro_history = []
-    num_epochs = 8000
+    num_epochs = 10000
     final_train_loss = None
 
     pbar = tqdm(range(num_epochs), desc="Training", unit="epoch")
@@ -142,8 +142,8 @@ def train_prediction_model(train_path=None, test_path=None, input_path=None, out
         ro_lr_scale = update_ro_lr(epoch)
         ro_weight, b_weight = get_dynamic_weights(epoch)
 
-        if epoch >= 3000 and epoch % 500 == 0:
-            step = (epoch - 3000) // 500
+        if epoch >= 5000 and epoch % 500 == 0:
+            step = (epoch - 5000) // 500
             loss_manager.set_weights({
                 'phys': min(5.0, 3.0 + 0.2 * step),
                 'cont': min(2.0, 1.0 + 0.1 * step),

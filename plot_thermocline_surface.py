@@ -8,15 +8,7 @@
 #   在 compute_velocity(...) 返回，并在 decay = exp(-|z-Z0|/Ro) 中作为垂向中心。
 #
 # 用法示例：
-#   python plot_thermocline_surface.py \
-#     --model outputs/exp_1/model_final.pt \
-#     --train-csv data/processed_data_mean_train.csv \
-#     --test-csv data/processed_data_mean_test.csv \
-#     --outdir outputs/exp_1 \
-#     --device cuda:0 \
-#     --sample 0 \
-#     --cmap jet \
-#     --levels 256
+#   python .\plot_thermocline_surface.py --model outputs/exp_7/model_final.pt --train-csv data/processed_data_mean_train.csv --test-csv data/processed_data_mean_test.csv --outdir outputs/exp_7 --device cuda:0 --sample 0 --grid-nx 1000 --grid-ny 1000 --cmap jet --levels 256
 #
 # 输出：
 #   <outdir>/fig/thermocline_Z0_contourf.png   (推荐：更平滑)
@@ -264,6 +256,27 @@ def main():
 
     # 7) interpolate to grid (smooth)
     Xg, Yg, Zg = interpolate_to_grid(lon, lat, z0_depth, nx=args.grid_nx, ny=args.grid_ny, method=args.interp)
+
+    # ========== 新增：导出网格数据到.mat文件 ==========
+    from scipy.io import savemat
+
+    # 定义.mat文件保存路径（和图片同目录）
+    mat_save_path = fig_dir / "thermocline_grid_data.mat"
+    # 保存数据（MATLAB 读取时变量名对应：Xg, Yg, Zg, 轴标签）
+    savemat(
+        str(mat_save_path),
+        {
+            "Xg": Xg,          # 经度网格 (ny, nx)
+            "Yg": Yg,          # 纬度网格 (ny, nx)
+            "Zg": Zg,          # 深度数据 (ny, nx)
+            "x_label": x_label,
+            "y_label": y_label,
+            "z_label": z_label,
+            "title_str": args.title
+        }
+    )
+    print(f"已导出 MATLAB 绘图数据: {mat_save_path}")
+    # ================================================
 
     # 8) plot 2D smooth contourf
     plot_contourf(
