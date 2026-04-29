@@ -1,30 +1,119 @@
-# EnhancedPINN: Thermocline-Aware Physics-Informed Neural Network
+# mar\_PINN-2 — Thermocline-Aware Multiscale PINN (EnhancedPINN)
 
-This project implements a multiscale PINN model for predicting oceanic and atmospheric velocity fields influenced by thermocline boundary structures.
+本仓库实现了一个**考虑温跃层（thermocline）边界结构的多尺度 Physics-Informed Neural Network (PINN)**，用于预测海洋/大气中的速度场，并通过物理残差（动量方程、连续性方程等）对网络进行约束。
 
-## Features
+> 代码以 **Python 为主（~96%）**，并包含少量 MATLAB 辅助脚本（~4%）。
 
-- SIREN-based neural architecture
-- Dynamic thermocline depth modeling
-- Depth-aware correction networks
-- Physics residual enforcement (momentum, continuity)
-- Directional loss and energy constraints
+## 目录
 
-## File Overview
+- [项目亮点](#项目亮点)
+- [仓库结构](#仓库结构)
+- [环境与安装](#环境与安装)
+- [快速开始](#快速开始)
+- [训练与评估](#训练与评估)
+- [输出与可视化](#输出与可视化)
+- [常见问题](#常见问题)
+- [引用与致谢](#引用与致谢)
+- [License](#license)
 
-| File | Description |
-|------|-------------|
-| `siren.py` | SIREN layer with sinusoidal activation |
-| `losses.py` | Directional loss function |
-| `z0_net.py` | Dynamic thermocline depth predictor |
-| `correction_net.py` | Depth-aware correction networks |
-| `base_flow.py` | Base velocity field predictor |
-| `utils.py` | Device selection and helpers |
-| `physics_model.py` | Main PINN model |
-| `train.py` | Training loop with synthetic data |
+## 项目亮点
 
-## Getting Started
+- **SIREN**（sinusoidal representation networks）作为主干网络，以提升对高频信号的表达能力（见 `siren.py`）。
+- **温跃层深度建模**：使用 `z0_net.py` 学习动态温跃层深度（z0）。
+- **深度相关修正网络**：`correction_net.py` 对不同深度区域进行校正。
+- **物理约束**：通过 `physics_residual.py` / `compute_physics_residual.py` 计算残差项，训练时纳入损失（见 `losses.py`）。
+- **工具与导出**：保存、缩放与参数导出（`save_utils.py`, `scaler_manager.py`, `export_physics_params.py`）。
+
+## 仓库结构
+
+下表是核心文件的功能概览（以仓库根目录为准）：
+
+| 文件 | 说明 |
+|------|------|
+| `train.py` | 训练入口与训练循环 |
+| `evaluate.py` | 评估脚本（如有） |
+| `predict.py` | 推理/预测脚本（如有） |
+| `physics_model.py` | PINN 主模型组装 |
+| `physics_residual.py` / `compute_physics_residual.py` | 物理残差计算 |
+| `base_flow.py` | 基础速度场预测 |
+| `z0_net.py` | 温跃层深度（z0）预测网络 |
+| `correction_net.py` | 深度相关修正网络 |
+| `losses.py` | 损失函数（含方向性/能量等约束） |
+| `data_loader.py` | 数据加载逻辑 |
+| `config.py` | 超参数/路径等配置 |
+| `plot_*.py` | 绘图与可视化脚本（如 loss 曲线、对比图等） |
+| `requirements.txt` | Python 依赖 |
+| `data/` | 数据目录 |
+| `outputs/` | 训练输出（模型、日志、图等） |
+
+## 环境与安装
+
+建议使用 Python 虚拟环境：
 
 ```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+source .venv/bin/activate
+
 pip install -r requirements.txt
+```
+
+> 如果你使用 Conda，也可以创建 conda 环境后再安装依赖。
+
+## 快速开始
+
+最小可运行流程通常是直接训练：
+
+```bash
 python train.py
+```
+
+如果仓库提供了推理与评估脚本，可按需运行：
+
+```bash
+python evaluate.py
+python predict.py
+```
+
+## 训练与评估
+
+- 训练配置一般集中在 `config.py`（例如学习率、batch size、数据路径、损失权重等）。
+- 训练过程中会计算 PINN 的多项损失（数据拟合 + 物理残差 + 方向性/能量等项）。
+
+如果你希望复现实验结果：
+
+1. 确认 `data/` 下的数据是否齐全，路径与 `config.py` 一致。
+2. 运行 `train.py`。
+3. 在 `outputs/` 下查看保存的模型与可视化结果。
+
+## 输出与可视化
+
+仓库包含多个绘图脚本（`plot_loss_curve.py`, `plot_uv_compare.py`, `plot_thermocline_surface.py` 等）。常见用法：
+
+```bash
+python plot_loss_curve.py
+python plot_uv_compare.py
+```
+
+> 具体输入/输出文件名请以各脚本内部参数或 `config.py` 为准。
+
+## 常见问题
+
+- **Q: 为什么没有 `README.md` 而是 `ReadMe`？**
+  - A: 本仓库当前使用 `ReadMe` 作为说明文件。为了兼容 GitHub 默认渲染与生态工具，建议后续可以新增/迁移为 `README.md`（可选）。
+
+- **Q: 运行时报 CUDA/显存问题怎么办？**
+  - A: 可以尝试减小 batch size、降低网络宽度/深度，或在 `utils.py` 中确认设备选择逻辑。
+
+## 引用与致谢
+
+如果你在科研工作中使用了本仓库代码，建议在论文/报告中：
+
+- 描述所使用的 PINN 架构与物理约束项
+- 引用 SIREN / PINN 相关基础工作（按你的论文规范添加）
+
+> 如需我帮你补充“对应论文/项目链接、数据来源、实验设置、可复现命令”等信息，把相关信息（论文题目/链接、数据说明、训练超参）发我即可。
+
+## License
+
+当前仓库未检测到明确的 License 文件。若你计划开源/复用，建议添加合适的许可证（如 MIT / Apache-2.0 / GPL-3.0 等）。
