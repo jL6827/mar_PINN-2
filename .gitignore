@@ -1,0 +1,4 @@
+__pycache__/
+*.py[cod]
+*.pyo
+outputs/exp_1/fig/gdot_nhat_contourf.png
