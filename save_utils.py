@@ -286,6 +286,75 @@ class PredictionSaver:
         df.to_csv(csv_path, index=False)
         print(f"📄 速度场数据已保存到: {csv_path}")
 
+    def save_physics_fields(self, x, y, z, t,
+                        Z0, theta, eta,
+                        P, g1, g2, h1, h2,
+                        time_phase_C2, time_phase_C3):
+        """
+        保存物理场相关的逐点输出到 CSV：
+        包含：反归一化的 x,y,z,t、Z0（反归一化）、theta、eta、P、g1/g2、h1/h2、time_phase_C2/C3、
+            以及 Z0 在 x、y 方向的梯度（Z0_x, Z0_y）与梯度范数（Z0_grad_norm）
+        """
+        # 计算 Z0 梯度（需要 x,y 可导）
+        x.requires_grad_(True)
+        y.requires_grad_(True)
+
+        # 一次性求出 Z0 对 x、y 的梯度，避免二次反向
+        Z0_x, Z0_y = torch.autograd.grad(
+            outputs=Z0,
+            inputs=(x, y),
+            grad_outputs=torch.ones_like(Z0),
+            retain_graph=False,
+            create_graph=False
+        )
+        Z0_grad_norm = torch.sqrt(Z0_x.flatten()**2 + Z0_y.flatten()**2 + 1e-12)
+
+        df = pd.DataFrame({
+            # 使用 ScalerManager 已有的反归一化接口
+            "x": self.scaler_mgr.inverse_x(x).reshape(-1),
+            "y": self.scaler_mgr.inverse_y(y).reshape(-1),
+            "z": self.scaler_mgr.inverse_transform_depth(z).reshape(-1),
+            "t": self.scaler_mgr.inverse_time(t).reshape(-1),
+
+            # Z0 反归一化
+            "Z0": self.scaler_mgr.inverse_transform_depth(Z0).reshape(-1),
+
+            # 其余物理量为网络输出，直接保存
+            "theta": theta.detach().cpu().numpy().reshape(-1),
+            "eta": eta.detach().cpu().numpy().reshape(-1),
+            "P": P.detach().cpu().numpy().reshape(-1),
+            "g1": g1.detach().cpu().numpy().reshape(-1),
+            "g2": g2.detach().cpu().numpy().reshape(-1),
+            "h1": h1.detach().cpu().numpy().reshape(-1),
+            "h2": h2.detach().cpu().numpy().reshape(-1),
+            "time_phase_C2": time_phase_C2.detach().cpu().numpy().reshape(-1),
+            "time_phase_C3": time_phase_C3.detach().cpu().numpy().reshape(-1),
+
+            # Z0 梯度
+            "Z0_x": Z0_x.detach().cpu().numpy().reshape(-1),
+            "Z0_y": Z0_y.detach().cpu().numpy().reshape(-1),
+            "Z0_grad_norm": Z0_grad_norm.detach().cpu().numpy().reshape(-1),
+        })
+
+        path = os.path.join(self.output_dir, "physics_fields.csv")
+        df.to_csv(path, index=False, encoding="utf-8")
+        print(f"✅ 物理场逐点输出已保存到: {path}")
+
+    def save_physics_scalars(self):
+    #保存模型中学习到的全局/标量参数到 JSON：包含：Ro、B0、B1、f（以及可扩展的其它标量）
+        scalars = {
+            "Ro": float(self.model.Ro.item()) if hasattr(self.model, "Ro") else None,
+            "B0": float(self.model.B0_scalar.item()) if hasattr(self.model, "B0_scalar") else None,
+            "B1": float(self.model.B1_scalar.item()) if hasattr(self.model, "B1_scalar") else None,
+            "f": float(self.model.f.item()) if hasattr(self.model, "f") else None,
+        }
+        path = os.path.join(self.output_dir, "physics_scalars.json")
+        with open(path, "w", encoding="utf-8") as fobj:
+            json.dump(scalars, fobj, ensure_ascii=False, indent=2)
+        print(f"✅ 物理标量参数已保存到: {path}")
+
+
+
     def save_all(self, original_df, u_pred, v_pred, u_true, v_true,
                  Z0, x, y, z, t, g1, g2,
                  final_losses, extra_metrics=None):
@@ -311,4 +380,5 @@ class PredictionSaver:
         self.plot_uv_diagnostics(u_pred, u_true, v_pred, v_true)
 
         print("所有输出已保存完毕")
+        
 

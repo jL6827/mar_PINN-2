@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # plot_pred_vs_true_speed.py
-# 说明：读取 evaluate.py 生成的 velocity_comparison_data.csv，绘制“预测 vs 真实速度”散点图，
+# 说明：读取 evaluate.py 生成的 velocity_comparison_data.csv，绘制u分量、v分量的预测vs真实对比散点图，
 #      并在图中标注 R^2、RMSE 等指标。
 #
 # 用法示例：
@@ -8,7 +8,9 @@
 #   python plot_pred_vs_true_speed.py --csv outputs/exp_1/velocity_comparison_data.csv
 #
 # 输出：
-#   <outdir>/fig/pred_vs_true_speed_scatter.png
+#   <outdir>/fig/u_pred_vs_true_scatter.png
+#   <outdir>/fig/v_pred_vs_true_scatter.png
+#   (可选) <outdir>/fig/speed_pred_vs_true_scatter.png
 
 import argparse
 import os
@@ -33,30 +35,33 @@ def compute_r2_rmse(y_true: np.ndarray, y_pred: np.ndarray):
     return r2, rmse
 
 
-def plot_scatter_pred_vs_true_speed(
-    speed_true: np.ndarray,
-    speed_pred: np.ndarray,
+def plot_scatter_pred_vs_true(
+    true_vals: np.ndarray,
+    pred_vals: np.ndarray,
     save_path: str,
-    title: str = "Predicted vs True Speed",
+    title: str,
+    xlabel: str,
+    ylabel: str,
 ):
-    speed_true = np.asarray(speed_true, dtype=float).ravel()
-    speed_pred = np.asarray(speed_pred, dtype=float).ravel()
-    if speed_true.shape != speed_pred.shape:
-        raise ValueError(f"shape 不一致：speed_true={speed_true.shape}, speed_pred={speed_pred.shape}")
+    """通用的散点图绘制函数"""
+    true_vals = np.asarray(true_vals, dtype=float).ravel()
+    pred_vals = np.asarray(pred_vals, dtype=float).ravel()
+    if true_vals.shape != pred_vals.shape:
+        raise ValueError(f"shape 不一致：true={true_vals.shape}, pred={pred_vals.shape}")
 
-    r2, rmse = compute_r2_rmse(speed_true, speed_pred)
+    r2, rmse = compute_r2_rmse(true_vals, pred_vals)
 
-    vmin = float(np.nanmin([speed_true.min(), speed_pred.min()]))
-    vmax = float(np.nanmax([speed_true.max(), speed_pred.max()]))
+    vmin = float(np.nanmin([true_vals.min(), pred_vals.min()]))
+    vmax = float(np.nanmax([true_vals.max(), pred_vals.max()]))
 
     plt.figure(figsize=(6.2, 6.2), dpi=150)
-    plt.scatter(speed_true, speed_pred, s=10, alpha=0.6, edgecolors="none")
+    plt.scatter(true_vals, pred_vals, s=10, alpha=0.6, edgecolors="none")
 
     # 理想线 y=x
     plt.plot([vmin, vmax], [vmin, vmax], "r--", lw=1.6, label="Ideal: y=x")
 
-    plt.xlabel("True speed (observed)")
-    plt.ylabel("Predicted speed (model)")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.title(title)
 
     txt = f"$R^2$ = {r2:.4f}\nRMSE = {rmse:.4f}"
@@ -84,7 +89,7 @@ def plot_scatter_pred_vs_true_speed(
 
 def main():
     p = argparse.ArgumentParser(
-        description="绘制预测 vs 真实速度散点图（基于 velocity_comparison_data.csv），并标注 R^2、RMSE。"
+        description="绘制u/v分量的预测 vs 真实值散点图（基于 velocity_comparison_data.csv），并标注 R^2、RMSE。"
     )
     p.add_argument(
         "--csv",
@@ -97,15 +102,16 @@ def main():
         help="evaluate.py 的输出目录，例如 outputs/exp_1。若提供，会默认读取 <outdir>/velocity_comparison_data.csv，并把图保存到 <outdir>/fig/",
     )
     p.add_argument(
-        "--fig-name",
-        default="pred_vs_true_speed_scatter.png",
-        help="输出图文件名（保存于 fig 目录下）。",
+        "--plot-speed",
+        action="store_true",
+        help="是否额外绘制速度大小（合速度）的对比图",
     )
     args = p.parse_args()
 
     if args.csv is None and args.outdir is None:
         raise SystemExit("请提供 --csv 或 --outdir 至少一个参数")
 
+    # 确定CSV路径和输出目录
     if args.csv is None:
         csv_path = Path(args.outdir) / "velocity_comparison_data.csv"
     else:
@@ -116,27 +122,63 @@ def main():
     else:
         outdir = Path(args.outdir)
 
+    # 检查CSV文件是否存在
     if not csv_path.exists():
         raise FileNotFoundError(f"找不到 comparison CSV：{csv_path}")
 
+    # 读取数据并验证列
     df = pd.read_csv(csv_path)
     required = {"u_true", "u_pred", "v_true", "v_pred"}
     if not required.issubset(set(df.columns)):
         raise ValueError(f"CSV 缺少必要列：{required}，当前列：{list(df.columns)}")
 
+    # 提取u、v分量数据
     u_true = df["u_true"].to_numpy(dtype=float)
-    v_true = df["v_true"].to_numpy(dtype=float)
     u_pred = df["u_pred"].to_numpy(dtype=float)
+    v_true = df["v_true"].to_numpy(dtype=float)
     v_pred = df["v_pred"].to_numpy(dtype=float)
 
-    speed_true = np.sqrt(u_true ** 2 + v_true ** 2)
-    speed_pred = np.sqrt(u_pred ** 2 + v_pred ** 2)
-
+    # 定义输出目录
     fig_dir = outdir / "fig"
-    save_path = fig_dir / args.fig_name
 
-    plot_scatter_pred_vs_true_speed(speed_true, speed_pred, str(save_path))
-    print(f"已保存散点图: {save_path}")
+    # 绘制u分量对比图
+    u_save_path = fig_dir / "u_pred_vs_true_scatter.png"
+    plot_scatter_pred_vs_true(
+        true_vals=u_true,
+        pred_vals=u_pred,
+        save_path=str(u_save_path),
+        title="Predicted vs True U-component",
+        xlabel="True U-component",
+        ylabel="Predicted U-component"
+    )
+    print(f"已保存u分量散点图: {u_save_path}")
+
+    # 绘制v分量对比图
+    v_save_path = fig_dir / "v_pred_vs_true_scatter.png"
+    plot_scatter_pred_vs_true(
+        true_vals=v_true,
+        pred_vals=v_pred,
+        save_path=str(v_save_path),
+        title="Predicted vs True V-component",
+        xlabel="True V-component",
+        ylabel="Predicted V-component"
+    )
+    print(f"已保存v分量散点图: {v_save_path}")
+
+    # 可选：绘制速度大小对比图
+    if args.plot_speed:
+        speed_true = np.sqrt(u_true ** 2 + v_true ** 2)
+        speed_pred = np.sqrt(u_pred ** 2 + v_pred ** 2)
+        speed_save_path = fig_dir / "speed_pred_vs_true_scatter.png"
+        plot_scatter_pred_vs_true(
+            true_vals=speed_true,
+            pred_vals=speed_pred,
+            save_path=str(speed_save_path),
+            title="Predicted vs True Speed",
+            xlabel="True speed (observed)",
+            ylabel="Predicted speed (model)"
+        )
+        print(f"已保存速度大小散点图: {speed_save_path}")
 
 
 if __name__ == "__main__":
