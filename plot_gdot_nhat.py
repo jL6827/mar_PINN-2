@@ -1,45 +1,35 @@
 #!/usr/bin/env python3
 # plot_gdot_nhat.py
-# ËµÃ÷£º
-#   ¼ÆËã²¢»æÖÆÖØÁ¦¼ÓËÙ¶ÈÏòÁ¿ g ÓëÎÂÔ¾²ã½çÃæ·¨Ïòµ¥Î»ÏòÁ¿ n? µÄµã»ıµÄ¿Õ¼ä·Ö²¼Í¼¡£
+# è¯´æ˜ï¼š
+#   è®¡ç®—å¹¶ç»˜åˆ¶é‡åŠ›åŠ é€Ÿåº¦å‘é‡ g ä¸æ¸©è·ƒå±‚ç•Œé¢æ³•å‘å•ä½å‘é‡ nÌ‚ çš„ç‚¹ç§¯çš„ç©ºé—´åˆ†å¸ƒå›¾ã€‚
 #
-# ÎïÀí/ÊıÑ§Ô­Àí£¨º¬·ûºÅÔ¼¶¨£©£º
-#   ÉèÎÂÔ¾²ã½çÃæÎªÇúÃæ z = Z0(x, y)£¨Ä£ĞÍÊä³ö£©£¬½«ÆäĞ´³ÉÒşÊ½ÇúÃæ£º
+# ç‰©ç†/æ•°å­¦åŸç†ï¼ˆå«ç¬¦å·çº¦å®šï¼‰ï¼š
+#   è®¾æ¸©è·ƒå±‚ç•Œé¢ä¸ºæ›²é¢ z = Z0(x, y)ï¼ˆæ¨¡å‹è¾“å‡ºï¼‰ï¼Œå°†å…¶å†™æˆéšå¼æ›²é¢ï¼š
 #       F(x, y, z) = z - Z0(x, y) = 0
-#   Ôò£¨ÏòÉÏµÄ£©·¨ÏòÁ¿Îª£º
-#       n = ?F = (-?Z0/?x,  -?Z0/?y,  1)
-#   µ¥Î»·¨ÏòÁ¿£¨Ä¬ÈÏÈ¡ÏòÉÏ£¬¼´ z ·ÖÁ¿ > 0£©£º
-#       n? = n / ¡¬n¡¬£¬  ¡¬n¡¬ = sqrt((?Z0/?x)? + (?Z0/?y)? + 1)
+#   åˆ™ï¼ˆå‘ä¸Šçš„ï¼‰æ³•å‘é‡ä¸ºï¼š
+#       n = âˆ‡F = (-âˆ‚Z0/âˆ‚x,  -âˆ‚Z0/âˆ‚y,  1)
+#   å•ä½æ³•å‘é‡ï¼ˆé»˜è®¤å–å‘ä¸Šï¼Œå³ z åˆ†é‡ > 0ï¼‰ï¼š
+#       nÌ‚ = n / â€–nâ€–ï¼Œ  â€–nâ€– = sqrt((âˆ‚Z0/âˆ‚x)Â² + (âˆ‚Z0/âˆ‚y)Â² + 1)
 #
-#   ÖØÁ¦¼ÓËÙ¶ÈÏòÁ¿£¨ÊúÖ±ÏòÏÂÎª¸º z ·½Ïò£©£º
-#       g = (0, 0, -g0)£¬  g0 ¡Ö 9.81 m/s?
+#   é‡åŠ›åŠ é€Ÿåº¦å‘é‡ï¼ˆç«–ç›´å‘ä¸‹ä¸ºè´Ÿ z æ–¹å‘ï¼‰ï¼š
+#       g = (0, 0, -g0)ï¼Œ  g0 â‰ˆ 9.81 m/sÂ²
 #
-#   µã»ı£¨¼´ÖØÁ¦ÔÚ·¨ÏòÉÏµÄ·ÖÁ¿£©£º
-#       g ¡¤ n? = (0¡¤n?_x + 0¡¤n?_y + (-g0)¡¤n?_z)
-#             = -g0 ¡¤ (1 / ¡¬n¡¬)
-#             = -g0 / sqrt(1 + (?Z0/?x)? + (?Z0/?y)?)
+#   ç‚¹ç§¯ï¼ˆå³é‡åŠ›åœ¨æ³•å‘ä¸Šçš„åˆ†é‡ï¼‰ï¼š
+#       g Â· nÌ‚ = (0Â·nÌ‚_x + 0Â·nÌ‚_y + (-g0)Â·nÌ‚_z)
+#             = -g0 Â· (1 / â€–nâ€–)
+#             = -g0 / sqrt(1 + (âˆ‚Z0/âˆ‚x)Â² + (âˆ‚Z0/âˆ‚y)Â²)
 #
-#   ½á¹ûÓÀÔ¶Îª¸º£¨Ô¼ [-9.81, 0)£©£º
-#     - ½çÃæÔ½Æ½Ì¹£¨ÆÂ¶È¡ú0£©£¬·¨ÏòÔ½½Ó½üÊúÖ±£¬¡¬n¡¬¡ú1£¬µã»ı¡ú-g0£¨¾ø¶ÔÖµ×î´ó£©¡£
-#     - ½çÃæÆÂ¶ÈÔ½´ó£¬·¨ÏòÔ½ÇãĞ±£¬¡¬n¡¬Ôö´ó£¬µã»ı¾ø¶ÔÖµÔ½Ğ¡£¨Ç÷½ü 0£©¡£
+#   ç»“æœæ°¸è¿œä¸ºè´Ÿï¼ˆçº¦ [-9.81, 0)ï¼‰ï¼š
+#     - ç•Œé¢è¶Šå¹³å¦ï¼ˆå¡åº¦â†’0ï¼‰ï¼Œæ³•å‘è¶Šæ¥è¿‘ç«–ç›´ï¼Œâ€–nâ€–â†’1ï¼Œç‚¹ç§¯â†’-g0ï¼ˆç»å¯¹å€¼æœ€å¤§ï¼‰ã€‚
+#     - ç•Œé¢å¡åº¦è¶Šå¤§ï¼Œæ³•å‘è¶Šå€¾æ–œï¼Œâ€–nâ€–å¢å¤§ï¼Œç‚¹ç§¯ç»å¯¹å€¼è¶Šå°ï¼ˆè¶‹è¿‘ 0ï¼‰ã€‚
 #
-#   ÈôÖ¸¶¨ --flip-sign£¨»ò --normal-up Âß¼­Ïà·´·½Ïò£©£¬ÔòÊä³ö +g0/¡¬n¡¬£¨ÕıÖµ£©£»
-#   ÕâµÈ¼ÛÓÚ½«·¨Ïò¶¨ÒåÎªÏòÏÂ£¨z ·ÖÁ¿ < 0£©¡£
+#   è‹¥æŒ‡å®š --flip-signï¼ˆæˆ– --normal-up é€»è¾‘ç›¸åæ–¹å‘ï¼‰ï¼Œåˆ™è¾“å‡º +g0/â€–nâ€–ï¼ˆæ­£å€¼ï¼‰ï¼›
+#   è¿™ç­‰ä»·äºå°†æ³•å‘å®šä¹‰ä¸ºå‘ä¸‹ï¼ˆz åˆ†é‡ < 0ï¼‰ã€‚
 #
-# ÓÃ·¨Ê¾Àı£¨exp6 Ä¬ÈÏÖµÒÑÔ¤Ìî£©£º
-#   python plot_gdot_nhat.py
-#   python plot_gdot_nhat.py --flip-sign
-#   python plot_gdot_nhat.py \
-#     --model outputs/exp_6/model_final.pt \
-#     --train-csv data/processed_data_mean_train.csv \
-#     --test-csv data/processed_data_mean_test.csv \
-#     --outdir outputs/exp_6 \
-#     --device cpu \
-#     --sample 0 \
-#     --cmap RdBu_r \
-#     --levels 128
+# ç”¨æ³•ç¤ºä¾‹ï¼ˆexp7 é»˜è®¤å€¼å·²é¢„å¡«ï¼‰ï¼š
+#   python plot_gdot_nhat.py --model outputs/exp_7/model_final.pt --train-csv data/processed_data_mean_train.csv --test-csv data/processed_data_mean_test.csv --outdir outputs/exp_7
 #
-# Êä³ö£º
+# è¾“å‡ºï¼š
 #   <outdir>/fig/gdot_nhat_contourf.png
 import argparse
 import os
@@ -48,8 +38,8 @@ import numpy as np
 import pandas as pd
 import torch
 import matplotlib
-matplotlib.use("Agg")  # ±ÜÃâÎŞ GUI »·¾³±¨´í
-# Ö±½Ó¸´ÓÃÒÑÓĞ¹¤¾ßº¯Êı£¬±£³Ö´úÂëÒ»ÖÂĞÔ
+matplotlib.use("Agg")  # é¿å…æ—  GUI ç¯å¢ƒæŠ¥é”™
+# ç›´æ¥å¤ç”¨å·²æœ‰å·¥å…·å‡½æ•°ï¼Œä¿æŒä»£ç ä¸€è‡´æ€§
 from plot_thermocline_surface import (
     interpolate_to_grid,
     load_model,
@@ -58,127 +48,127 @@ from plot_thermocline_surface import (
 from data_loader import load_csv_data_from_df
 def compute_gdot_nhat(Zg: np.ndarray, Xg: np.ndarray, Yg: np.ndarray, g0: float = 9.81, flip_sign: bool = False) -> np.ndarray:
     """
-    ¸ø¶¨¹æÔòÍø¸ñÉÏµÄ½çÃæÉî¶È³¡ Zg = Z0(x, y)£¬¼ÆËãÖØÁ¦¼ÓËÙ¶ÈÓë½çÃæ·¨Ïòµ¥Î»ÏòÁ¿µÄµã»ı¡£
-    ²ÎÊı
+    ç»™å®šè§„åˆ™ç½‘æ ¼ä¸Šçš„ç•Œé¢æ·±åº¦åœº Zg = Z0(x, y)ï¼Œè®¡ç®—é‡åŠ›åŠ é€Ÿåº¦ä¸ç•Œé¢æ³•å‘å•ä½å‘é‡çš„ç‚¹ç§¯ã€‚
+    å‚æ•°
     ----
     Zg : ndarray, shape (ny, nx)
-        ²åÖµºó¹æÔòÍø¸ñÉÏµÄ½çÃæÉî¶È£¨ÎïÀíµ¥Î»£¬ÈçÃ×£©¡£
+        æ’å€¼åè§„åˆ™ç½‘æ ¼ä¸Šçš„ç•Œé¢æ·±åº¦ï¼ˆç‰©ç†å•ä½ï¼Œå¦‚ç±³ï¼‰ã€‚
     Xg : ndarray, shape (ny, nx)
-        ¹æÔòÍø¸ñµÄ¾­¶È×ø±ê¡£
+        è§„åˆ™ç½‘æ ¼çš„ç»åº¦åæ ‡ã€‚
     Yg : ndarray, shape (ny, nx)
-        ¹æÔòÍø¸ñµÄÎ³¶È×ø±ê¡£
+        è§„åˆ™ç½‘æ ¼çš„çº¬åº¦åæ ‡ã€‚
     g0 : float
-        ÖØÁ¦¼ÓËÙ¶È±êÁ¿£¬Ä¬ÈÏ 9.81 m/s?¡£
+        é‡åŠ›åŠ é€Ÿåº¦æ ‡é‡ï¼Œé»˜è®¤ 9.81 m/sÂ²ã€‚
     flip_sign : bool
-        ÈôÎª True£¬Ôò·­×ª·ûºÅ£¨Ïàµ±ÓÚÈ¡ÏòÏÂ·¨Ïò£©£¬½á¹ûÎªÕıÖµ£»
-        ÈôÎª False£¨Ä¬ÈÏ£©£¬·¨ÏòÏòÉÏ£¬µã»ıÎª¸ºÖµ¡£
-    ·µ»Ø
+        è‹¥ä¸º Trueï¼Œåˆ™ç¿»è½¬ç¬¦å·ï¼ˆç›¸å½“äºå–å‘ä¸‹æ³•å‘ï¼‰ï¼Œç»“æœä¸ºæ­£å€¼ï¼›
+        è‹¥ä¸º Falseï¼ˆé»˜è®¤ï¼‰ï¼Œæ³•å‘å‘ä¸Šï¼Œç‚¹ç§¯ä¸ºè´Ÿå€¼ã€‚
+    è¿”å›
     ----
     gdot : ndarray, shape (ny, nx)
-        g ¡¤ n? µÄ¿Õ¼ä·Ö²¼£¬µ¥Î»Óë g0 ÏàÍ¬£¨m/s?£©¡£
-        Ä¬ÈÏ£¨flip_sign=False£©·¶Î§Ô¼ [-9.81, 0)¡£
-        flip_sign=True Ê±·¶Î§Ô¼ (0, 9.81]¡£
-    ÊıÑ§ËµÃ÷
+        g Â· nÌ‚ çš„ç©ºé—´åˆ†å¸ƒï¼Œå•ä½ä¸ g0 ç›¸åŒï¼ˆm/sÂ²ï¼‰ã€‚
+        é»˜è®¤ï¼ˆflip_sign=Falseï¼‰èŒƒå›´çº¦ [-9.81, 0)ã€‚
+        flip_sign=True æ—¶èŒƒå›´çº¦ (0, 9.81]ã€‚
+    æ•°å­¦è¯´æ˜
     --------
-    - ·¨ÏòÁ¿·½Ïò£ºn = (-?Z0/?x, -?Z0/?y, 1)£¨ÏòÉÏ·¨Ïò£¬z ·ÖÁ¿ºãÎª +1£©
-    - ¡¬n¡¬ = sqrt((?Z0/?x)? + (?Z0/?y)? + 1)
-    - g = (0, 0, -g0)£¨ÏòÏÂ£©
-    - g ¡¤ n? = -g0 / ¡¬n¡¬
-    - Èô flip_sign=True£ºg ¡¤ n? = +g0 / ¡¬n¡¬
+    - æ³•å‘é‡æ–¹å‘ï¼šn = (-âˆ‚Z0/âˆ‚x, -âˆ‚Z0/âˆ‚y, 1)ï¼ˆå‘ä¸Šæ³•å‘ï¼Œz åˆ†é‡æ’ä¸º +1ï¼‰
+    - â€–nâ€– = sqrt((âˆ‚Z0/âˆ‚x)Â² + (âˆ‚Z0/âˆ‚y)Â² + 1)
+    - g = (0, 0, -g0)ï¼ˆå‘ä¸‹ï¼‰
+    - g Â· nÌ‚ = -g0 / â€–nâ€–
+    - è‹¥ flip_sign=Trueï¼šg Â· nÌ‚ = +g0 / â€–nâ€–
     """
-    # ´ÓÍø¸ñ×ø±êÖĞÌáÈ¡²½³¤£¨np.gradient ¿É½ÓÊÜÒ»Î¬×ø±êÊı×é£©
-    # Xg[0, :] ÊÇÑØ x£¨¾­¶È£©·½ÏòµÄÒ»Î¬Êı×é
-    # Yg[:, 0] ÊÇÑØ y£¨Î³¶È£©·½ÏòµÄÒ»Î¬Êı×é
+    # ä»ç½‘æ ¼åæ ‡ä¸­æå–æ­¥é•¿ï¼ˆnp.gradient å¯æ¥å—ä¸€ç»´åæ ‡æ•°ç»„ï¼‰
+    # Xg[0, :] æ˜¯æ²¿ xï¼ˆç»åº¦ï¼‰æ–¹å‘çš„ä¸€ç»´æ•°ç»„
+    # Yg[:, 0] æ˜¯æ²¿ yï¼ˆçº¬åº¦ï¼‰æ–¹å‘çš„ä¸€ç»´æ•°ç»„
     dx_vec = Xg[0, :]   # shape (nx,)
     dy_vec = Yg[:, 0]   # shape (ny,)
-    # ÔÚ NaN ´¦ÓÃ 0 Ìî³äÒÔÔÊĞí gradient ¼ÆËã£¬Ö®ºóÔÙ»¹Ô­ NaN
+    # åœ¨ NaN å¤„ç”¨ 0 å¡«å……ä»¥å…è®¸ gradient è®¡ç®—ï¼Œä¹‹åå†è¿˜åŸ NaN
     nan_mask = np.isnan(Zg)
     Zg_filled = np.where(nan_mask, 0.0, Zg)
-    # ¼ÆËã½çÃæÌİ¶È£º?Z0/?y£¨ÑØĞĞ£¬¼´ axis=0£©ºÍ ?Z0/?x£¨ÑØÁĞ£¬¼´ axis=1£©
-    # np.gradient(f, y_vec, x_vec) ·µ»Ø [df/dy, df/dx]
+    # è®¡ç®—ç•Œé¢æ¢¯åº¦ï¼šâˆ‚Z0/âˆ‚yï¼ˆæ²¿è¡Œï¼Œå³ axis=0ï¼‰å’Œ âˆ‚Z0/âˆ‚xï¼ˆæ²¿åˆ—ï¼Œå³ axis=1ï¼‰
+    # np.gradient(f, y_vec, x_vec) è¿”å› [df/dy, df/dx]
     dZ_dy, dZ_dx = np.gradient(Zg_filled, dy_vec, dx_vec)
-    # ¼ÆËã·¨ÏòÁ¿µÄÄ££º¡¬n¡¬ = sqrt(1 + (?Z0/?x)? + (?Z0/?y)?)
+    # è®¡ç®—æ³•å‘é‡çš„æ¨¡ï¼šâ€–nâ€– = sqrt(1 + (âˆ‚Z0/âˆ‚x)Â² + (âˆ‚Z0/âˆ‚y)Â²)
     norm_n = np.sqrt(1.0 + dZ_dx ** 2 + dZ_dy ** 2)
-    # g ¡¤ n? = -g0 / ¡¬n¡¬£¨·¨ÏòÏòÉÏ£¬ÖØÁ¦ÏòÏÂ£¬µã»ıÎª¸º£©
+    # g Â· nÌ‚ = -g0 / â€–nâ€–ï¼ˆæ³•å‘å‘ä¸Šï¼Œé‡åŠ›å‘ä¸‹ï¼Œç‚¹ç§¯ä¸ºè´Ÿï¼‰
     gdot = -g0 / norm_n
-    # ÈôĞèÒª·­×ª·ûºÅ£¨ÏòÏÂ·¨Ïò»òÓÃ»§ÒªÇóÕıÖµÊä³ö£©
+    # è‹¥éœ€è¦ç¿»è½¬ç¬¦å·ï¼ˆå‘ä¸‹æ³•å‘æˆ–ç”¨æˆ·è¦æ±‚æ­£å€¼è¾“å‡ºï¼‰
     if flip_sign:
         gdot = -gdot
-    # ½«Ô­À´ NaN ÇøÓò»¹Ô­Îª NaN£¬±ÜÃâ±ß½çÌî³äÖµÎÛÈ¾½á¹û
+    # å°†åŸæ¥ NaN åŒºåŸŸè¿˜åŸä¸º NaNï¼Œé¿å…è¾¹ç•Œå¡«å……å€¼æ±¡æŸ“ç»“æœ
     gdot[nan_mask] = np.nan
     return gdot
 def main():
     p = argparse.ArgumentParser(
         description=(
-            "»æÖÆÖØÁ¦¼ÓËÙ¶È g ÓëÎÂÔ¾²ã½çÃæ·¨Ïòµ¥Î»ÏòÁ¿ n? µÄµã»ı g¡¤n? µÄ¿Õ¼ä·Ö²¼Í¼¡£\n"
-            "ÎïÀíÒâÒå£ºg¡¤n? ·´Ó³ÖØÁ¦¼ÓËÙ¶ÈÔÚ½çÃæ·¨·½ÏòÉÏµÄ·ÖÁ¿£¨'·¨ÏòÖØÁ¦·ÖÁ¿'£©£¬\n"
-            "Óë½çÃæÆÂ¶ÈÖ±½ÓÏà¹Ø£¬ÊÇĞ±Ñ¹¶¯Á¦Ñ§ÖĞµÄÖØÒªÇı¶¯Á¿¡£"
+            "ç»˜åˆ¶é‡åŠ›åŠ é€Ÿåº¦ g ä¸æ¸©è·ƒå±‚ç•Œé¢æ³•å‘å•ä½å‘é‡ nÌ‚ çš„ç‚¹ç§¯ gÂ·nÌ‚ çš„ç©ºé—´åˆ†å¸ƒå›¾ã€‚\n"
+            "ç‰©ç†æ„ä¹‰ï¼šgÂ·nÌ‚ åæ˜ é‡åŠ›åŠ é€Ÿåº¦åœ¨ç•Œé¢æ³•æ–¹å‘ä¸Šçš„åˆ†é‡ï¼ˆ'æ³•å‘é‡åŠ›åˆ†é‡'ï¼‰ï¼Œ\n"
+            "ä¸ç•Œé¢å¡åº¦ç›´æ¥ç›¸å…³ï¼Œæ˜¯æ–œå‹åŠ¨åŠ›å­¦ä¸­çš„é‡è¦é©±åŠ¨é‡ã€‚"
         )
     )
     p.add_argument(
         "--model",
         default="outputs/exp_6/model_final.pt",
-        help="ÒÑÑµÁ·Ä£ĞÍÂ·¾¶£¬Ä¬ÈÏ outputs/exp_6/model_final.pt",
+        help="å·²è®­ç»ƒæ¨¡å‹è·¯å¾„ï¼Œé»˜è®¤ outputs/exp_6/model_final.pt",
     )
     p.add_argument(
         "--train-csv",
         default="data/processed_data_mean_train.csv",
-        help="ÑµÁ·¼¯ CSV£¨ÓÃÓÚÄâºÏ scaler£©£¬Ä¬ÈÏ data/processed_data_mean_train.csv",
+        help="è®­ç»ƒé›† CSVï¼ˆç”¨äºæ‹Ÿåˆ scalerï¼‰ï¼Œé»˜è®¤ data/processed_data_mean_train.csv",
     )
     p.add_argument(
         "--test-csv",
         default="data/processed_data_mean_test.csv",
-        help="²âÊÔ¼¯ CSV£¨Ìá¹©É¢µã¾­Î³¶ÈµÈ£©£¬Ä¬ÈÏ data/processed_data_mean_test.csv",
+        help="æµ‹è¯•é›† CSVï¼ˆæä¾›æ•£ç‚¹ç»çº¬åº¦ç­‰ï¼‰ï¼Œé»˜è®¤ data/processed_data_mean_test.csv",
     )
     p.add_argument(
         "--outdir",
         default="outputs/exp_6",
-        help="Êä³ö¸ùÄ¿Â¼£¬Í¼Æ¬½«±£´æµ½ <outdir>/fig/¡£Ä¬ÈÏ outputs/exp_6",
+        help="è¾“å‡ºæ ¹ç›®å½•ï¼Œå›¾ç‰‡å°†ä¿å­˜åˆ° <outdir>/fig/ã€‚é»˜è®¤ outputs/exp_6",
     )
-    p.add_argument("--device", default="cpu", help="¼ÆËãÉè±¸£¬ÀıÈç cpu »ò cuda:0")
+    p.add_argument("--device", default="cpu", help="è®¡ç®—è®¾å¤‡ï¼Œä¾‹å¦‚ cpu æˆ– cuda:0")
     p.add_argument(
         "--sample",
         type=int,
         default=5000,
-        help="ÓÃÓÚ²åÖµµÄÉ¢µã×î´óÊıÁ¿£»ÉèÎª 0 Ê¹ÓÃÈ«Á¿£¨½ÏÂı£©¡£Ä¬ÈÏ 5000",
+        help="ç”¨äºæ’å€¼çš„æ•£ç‚¹æœ€å¤§æ•°é‡ï¼›è®¾ä¸º 0 ä½¿ç”¨å…¨é‡ï¼ˆè¾ƒæ…¢ï¼‰ã€‚é»˜è®¤ 5000",
     )
-    p.add_argument("--grid-nx", type=int, default=250, help="²åÖµÍø¸ñ x ·½Ïò·Ö±æÂÊ£¬Ä¬ÈÏ 250")
-    p.add_argument("--grid-ny", type=int, default=250, help="²åÖµÍø¸ñ y ·½Ïò·Ö±æÂÊ£¬Ä¬ÈÏ 250")
+    p.add_argument("--grid-nx", type=int, default=250, help="æ’å€¼ç½‘æ ¼ x æ–¹å‘åˆ†è¾¨ç‡ï¼Œé»˜è®¤ 250")
+    p.add_argument("--grid-ny", type=int, default=250, help="æ’å€¼ç½‘æ ¼ y æ–¹å‘åˆ†è¾¨ç‡ï¼Œé»˜è®¤ 250")
     p.add_argument(
         "--interp",
         choices=["linear", "cubic", "nearest"],
         default="linear",
-        help="É¢µã¡ú¹æÔòÍø¸ñ²åÖµ·½·¨£¬Ä¬ÈÏ linear",
+        help="æ•£ç‚¹â†’è§„åˆ™ç½‘æ ¼æ’å€¼æ–¹æ³•ï¼Œé»˜è®¤ linear",
     )
     p.add_argument(
         "--g0",
         type=float,
         default=9.81,
-        help="ÖØÁ¦¼ÓËÙ¶È±êÁ¿£¨m/s?£©£¬Ä¬ÈÏ 9.81",
+        help="é‡åŠ›åŠ é€Ÿåº¦æ ‡é‡ï¼ˆm/sÂ²ï¼‰ï¼Œé»˜è®¤ 9.81",
     )
     p.add_argument(
         "--flip-sign",
         action="store_true",
         help=(
-            "·­×ªµã»ı·ûºÅ£ºÄ¬ÈÏ·¨ÏòÏòÉÏ£¨z ·ÖÁ¿ > 0£©£¬g¡¤n? Îª¸ºÖµ£»"
-            "Ö¸¶¨´ËÑ¡ÏîºóµÈ¼ÛÓÚÈ¡ÏòÏÂ·¨Ïò£¬Êä³öÕıÖµ¡£"
+            "ç¿»è½¬ç‚¹ç§¯ç¬¦å·ï¼šé»˜è®¤æ³•å‘å‘ä¸Šï¼ˆz åˆ†é‡ > 0ï¼‰ï¼ŒgÂ·nÌ‚ ä¸ºè´Ÿå€¼ï¼›"
+            "æŒ‡å®šæ­¤é€‰é¡¹åç­‰ä»·äºå–å‘ä¸‹æ³•å‘ï¼Œè¾“å‡ºæ­£å€¼ã€‚"
         ),
     )
     p.add_argument(
         "--cmap",
         default="RdBu_r",
-        help="matplotlib colormap£¬½¨ÒéÓÃ·¢É¢É«Ó³ÉäÈç RdBu_r / seismic¡£Ä¬ÈÏ RdBu_r",
+        help="matplotlib colormapï¼Œå»ºè®®ç”¨å‘æ•£è‰²æ˜ å°„å¦‚ RdBu_r / seismicã€‚é»˜è®¤ RdBu_r",
     )
     p.add_argument(
         "--levels",
         type=int,
         default=64,
-        help="contourf ÑÕÉ«µÈ¼¶Êı£»Ô½´ó¹ı¶ÉÔ½Æ½»¬¡£Ä¬ÈÏ 64",
+        help="contourf é¢œè‰²ç­‰çº§æ•°ï¼›è¶Šå¤§è¿‡æ¸¡è¶Šå¹³æ»‘ã€‚é»˜è®¤ 64",
     )
     p.add_argument(
         "--title",
         default=None,
-        help="Í¼±êÌâ£»Ä¬ÈÏ¸ù¾İ --flip-sign ×Ô¶¯Éú³É",
+        help="å›¾æ ‡é¢˜ï¼›é»˜è®¤æ ¹æ® --flip-sign è‡ªåŠ¨ç”Ÿæˆ",
     )
     args = p.parse_args()
     device = torch.device(args.device)
@@ -186,53 +176,53 @@ def main():
     fig_dir = outdir / "fig"
     save_path = fig_dir / "gdot_nhat_contourf.png"
     # ------------------------------------------------------------------
-    # 1) ´ÓÑµÁ·¼¯ÄâºÏ scaler£¨ÓëÑµÁ·±£³ÖÒ»ÖÂ£©
+    # 1) ä»è®­ç»ƒé›†æ‹Ÿåˆ scalerï¼ˆä¸è®­ç»ƒä¿æŒä¸€è‡´ï¼‰
     # ------------------------------------------------------------------
-    print(f"[1/7] ´ÓÑµÁ·¼¯ÄâºÏ scaler£º{args.train_csv}")
+    print(f"[1/7] ä»è®­ç»ƒé›†æ‹Ÿåˆ scalerï¼š{args.train_csv}")
     train_df = pd.read_csv(args.train_csv)
     _, _, _, _, _, _, scaler_mgr, _ = load_csv_data_from_df(train_df, device=device, fit_scaler=True)
     # ------------------------------------------------------------------
-    # 2) ¼ÓÔØ²âÊÔ¼¯²¢ÓÃ scaler ×ª»»
+    # 2) åŠ è½½æµ‹è¯•é›†å¹¶ç”¨ scaler è½¬æ¢
     # ------------------------------------------------------------------
-    print(f"[2/7] ¼ÓÔØ²âÊÔ¼¯£º{args.test_csv}")
+    print(f"[2/7] åŠ è½½æµ‹è¯•é›†ï¼š{args.test_csv}")
     test_df = pd.read_csv(args.test_csv)
     t, x, y, z, _, _, _, _ = load_csv_data_from_df(test_df, device=device, scaler_mgr=scaler_mgr, fit_scaler=False)
     # ------------------------------------------------------------------
-    # 3) ¿ÉÑ¡²ÉÑù£¬±ÜÃâµãÊı¹ı¶àÊ±ÄÚ´æ/ËÙ¶ÈÎÊÌâ
+    # 3) å¯é€‰é‡‡æ ·ï¼Œé¿å…ç‚¹æ•°è¿‡å¤šæ—¶å†…å­˜/é€Ÿåº¦é—®é¢˜
     # ------------------------------------------------------------------
     n = x.shape[0]
     if args.sample is not None and args.sample > 0 and n > args.sample:
-        print(f"[3/7] Ëæ»ú²ÉÑù {args.sample}/{n} ¸öÉ¢µã")
+        print(f"[3/7] éšæœºé‡‡æ · {args.sample}/{n} ä¸ªæ•£ç‚¹")
         idx = torch.randperm(n, device=device)[: args.sample]
         t_s = t[idx]
         x_s = x[idx]
         y_s = y[idx]
         z_s = torch.zeros_like(x_s)
     else:
-        print(f"[3/7] Ê¹ÓÃÈ«Á¿ {n} ¸öÉ¢µã")
+        print(f"[3/7] ä½¿ç”¨å…¨é‡ {n} ä¸ªæ•£ç‚¹")
         t_s, x_s, y_s = t, x, y
         z_s = torch.zeros_like(x)
     # ------------------------------------------------------------------
-    # 4) ¼ÓÔØÄ£ĞÍ
+    # 4) åŠ è½½æ¨¡å‹
     # ------------------------------------------------------------------
-    print(f"[4/7] ¼ÓÔØÄ£ĞÍ£º{args.model}")
+    print(f"[4/7] åŠ è½½æ¨¡å‹ï¼š{args.model}")
     model = load_model(args.model, scaler_mgr, device)
     # ------------------------------------------------------------------
-    # 5) ÔÚ z=0 ´¦Ç°ÏòÍÆ¶Ï£¬È¡ Z0£¨Ä£ĞÍÊä³öµÚ 9 ÁĞ£¬Óë plot_thermocline_surface.py Ò»ÖÂ£©
+    # 5) åœ¨ z=0 å¤„å‰å‘æ¨æ–­ï¼Œå– Z0ï¼ˆæ¨¡å‹è¾“å‡ºç¬¬ 9 åˆ—ï¼Œä¸ plot_thermocline_surface.py ä¸€è‡´ï¼‰
     # ------------------------------------------------------------------
-    print("[5/7] ÍÆ¶Ï Z0 ¡­")
+    print("[5/7] æ¨æ–­ Z0 â€¦")
     with torch.no_grad():
         out = model.forward(t_s, x_s, y_s, z_s)
         z0 = out[:, 9:10]
     # ------------------------------------------------------------------
-    # 6) ·´¹éÒ»»¯ÖÁÎïÀí×ø±ê
+    # 6) åå½’ä¸€åŒ–è‡³ç‰©ç†åæ ‡
     # ------------------------------------------------------------------
-    print("[6/7] ·´¹éÒ»»¯×ø±ê ¡­")
+    print("[6/7] åå½’ä¸€åŒ–åæ ‡ â€¦")
     try:
         lon = scaler_mgr.inverse_x(x_s).reshape(-1)
         lat = scaler_mgr.inverse_y(y_s).reshape(-1)
-        x_label = "Longitude (¡ãE)"
-        y_label = "Latitude (¡ãN)"
+        x_label = "Longitude (Â°E)"
+        y_label = "Latitude (Â°N)"
     except Exception:
         lon = x_s.detach().cpu().numpy().reshape(-1)
         lat = y_s.detach().cpu().numpy().reshape(-1)
@@ -243,28 +233,28 @@ def main():
     except Exception:
         z0_depth = z0.detach().cpu().numpy().reshape(-1)
     # ------------------------------------------------------------------
-    # 7) ²åÖµµ½¹æÔòÍø¸ñ£¬¼ÆËãÌİ¶ÈºÍ g¡¤n?£¬»æÍ¼
+    # 7) æ’å€¼åˆ°è§„åˆ™ç½‘æ ¼ï¼Œè®¡ç®—æ¢¯åº¦å’Œ gÂ·nÌ‚ï¼Œç»˜å›¾
     # ------------------------------------------------------------------
-    print("[7/7] ²åÖµ¡ú¼ÆËã·¨Ïò·ÖÁ¿¡ú»æÍ¼ ¡­")
-    # 7a) °ÑÉ¢µã²åÖµµ½¹æÔò¾­Î³Íø¸ñ
+    print("[7/7] æ’å€¼â†’è®¡ç®—æ³•å‘åˆ†é‡â†’ç»˜å›¾ â€¦")
+    # 7a) æŠŠæ•£ç‚¹æ’å€¼åˆ°è§„åˆ™ç»çº¬ç½‘æ ¼
     Xg, Yg, Zg = interpolate_to_grid(lon, lat, z0_depth, nx=args.grid_nx, ny=args.grid_ny, method=args.interp)
-    # 7b) ¼ÆËã g ¡¤ n?£º
-    #     - ¹¹Ôì·¨ÏòÁ¿ n = (-?Z0/?x, -?Z0/?y, 1)£¨ÏòÉÏ£©
-    #     - ¹éÒ»»¯Îªµ¥Î»ÏòÁ¿ n? = n / ¡¬n¡¬
-    #     - µã»ı g ¡¤ n? = (0,0,-g0) ¡¤ n? = -g0¡¤n?_z = -g0 / ¡¬n¡¬
+    # 7b) è®¡ç®— g Â· nÌ‚ï¼š
+    #     - æ„é€ æ³•å‘é‡ n = (-âˆ‚Z0/âˆ‚x, -âˆ‚Z0/âˆ‚y, 1)ï¼ˆå‘ä¸Šï¼‰
+    #     - å½’ä¸€åŒ–ä¸ºå•ä½å‘é‡ nÌ‚ = n / â€–nâ€–
+    #     - ç‚¹ç§¯ g Â· nÌ‚ = (0,0,-g0) Â· nÌ‚ = -g0Â·nÌ‚_z = -g0 / â€–nâ€–
     gdot = compute_gdot_nhat(Zg, Xg, Yg, g0=args.g0, flip_sign=args.flip_sign)
-    # 7c) ÉèÖÃ±êÌâºÍ colorbar ±êÇ©
+    # 7c) è®¾ç½®æ ‡é¢˜å’Œ colorbar æ ‡ç­¾
     if args.title is not None:
         title = args.title
     else:
         if args.flip_sign:
-            # ÏòÏÂ·¨Ïò£ºµã»ıÎªÕıÖµ
-            title = r"$\mathbf{g} \cdot \hat{\mathbf{n}}_{\downarrow}$ along thermocline normal (m/s?)"
+            # å‘ä¸‹æ³•å‘ï¼šç‚¹ç§¯ä¸ºæ­£å€¼
+            title = r"$\mathbf{g} \cdot \hat{\mathbf{n}}_{\downarrow}$ along thermocline normal (m/sÂ²)"
         else:
-            # ÏòÉÏ·¨Ïò£¨Ä¬ÈÏ£©£ºµã»ıÎª¸ºÖµ
-            title = r"$\mathbf{g} \cdot \hat{\mathbf{n}}_{\uparrow}$ along thermocline normal (m/s?)"
-    cbar_label = r"$g \cdot \hat{n}$  (m/s?)"
-    # 7d) »æÖÆ 2D contourf ²¢±£´æ
+            # å‘ä¸Šæ³•å‘ï¼ˆé»˜è®¤ï¼‰ï¼šç‚¹ç§¯ä¸ºè´Ÿå€¼
+            title = r"$\mathbf{g} \cdot \hat{\mathbf{n}}_{\uparrow}$ along thermocline normal (m/sÂ²)"
+    cbar_label = r"$g \cdot \hat{n}$  (m/sÂ²)"
+    # 7d) ç»˜åˆ¶ 2D contourf å¹¶ä¿å­˜
     plot_contourf(
         Xg,
         Yg,
@@ -277,6 +267,6 @@ def main():
         cmap=args.cmap,
         levels=args.levels,
     )
-    print(f"ÒÑ±£´æÍ¼Æ¬£º{save_path}")
+    print(f"å·²ä¿å­˜å›¾ç‰‡ï¼š{save_path}")
 if __name__ == "__main__":
     main()
