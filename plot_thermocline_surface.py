@@ -8,7 +8,7 @@
 #   在 compute_velocity(...) 返回，并在 decay = exp(-|z-Z0|/Ro) 中作为垂向中心。
 #
 # 用法示例：
-#   python .\plot_thermocline_surface.py --model outputs/exp_7/model_final.pt --train-csv data/processed_data_mean_train.csv --test-csv data/processed_data_mean_test.csv --outdir outputs/exp_7 --device cuda:0 --sample 0 --grid-nx 1000 --grid-ny 1000 --cmap jet --levels 256
+#   python .\plot_thermocline_surface.py --model outputs/exp_9/model_final.pt --train-csv data/processed_data_mean_train.csv --test-csv data/processed_data_mean_test.csv --outdir outputs/exp_9 --device cuda:0 --sample 0 --grid-nx 1000 --grid-ny 1000 --cmap jet --levels 256
 #
 # 输出：
 #   <outdir>/fig/thermocline_Z0_contourf.png   (推荐：更平滑)

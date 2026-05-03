@@ -1,0 +1,21 @@
+模型参数:
+Ro: 0.065022
+B0_scalar: 0.038421
+B1_scalar: 0.029438
+
+g · ∇Z₀:
+mean: 0.000000, std: 0.000000
+
+Predicted vs True Velocity Direction:
+mean: 0.939967, std: 0.169548
+
+损失项:
+data: 0.000080
+dir: 0.048400
+act: 0.000000
+phys: 0.024699
+cont: 0.004837
+direction_mae: 0.225739
+
+其他指标:
+Ro: 0.065022
